@@ -1,0 +1,35 @@
+.chat-interface {
+    flex: 1;
+    padding: 0.5rem;
+
+    display: grid;
+    grid-template-rows: 52px 1fr 300px;
+}
+header {
+    height: 52px;
+
+    cursor: pointer;
+}
+header p {
+    margin-block: 0rem;
+    padding: 0.5rem;
+    font-size: 18px;
+}
+header:hover p, header:focus-visible p {
+    width: fit-content;
+    background-color: var(--bg-elevated-secondary);
+    border-radius: 0.375rem;
+    cursor: pointer;
+}
+footer {
+    display: grid;
+    place-items: center;;
+}
+footer textarea {
+    box-sizing: content-box;
+    width: min(100%,30rem);
+    padding: 0.5rem;
+    height: 1lh;
+    display: block;
+    resize: none;
+}
