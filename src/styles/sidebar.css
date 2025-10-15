@@ -1,10 +1,14 @@
 .sidebar {
+    --sidebar-width: 260px;
     --toggle-btn-tooltip-relative-x: -4ch;
     --toggle-expand-tooltip-relative-x: -15ch;
     --new-chat-tooltip-relative-x: -11.5ch;
     --search-chats-tooltip-relative-x: -14ch;
+    --inline-chat-section-padding: 0.5rem;
+    --inline-chat-info-padding: 0.5rem;
+    --inline-chat-info-gap: 0.5rem;
     width: 100%;
-    max-width: 260px;
+    max-width: var(--sidebar-width);
     height: 100vh;
 
     display: grid;
@@ -163,11 +167,42 @@
     padding: 0.5rem;
     display: grid;
 }
-.bottom-section a {
+.chat-options {
+    margin-inline-start: var(--inline-chat-info-gap);
+    width: 20px;
+    height: 20px;
+
+    display: grid;
+    place-items: center;
+
+    display: none;
+}
+.bottom-section .chat-info {
     padding: 0.5rem;
-    display: block;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     text-decoration: none;
     color: var(--text-primary);
+}
+.chat-name {
+    max-width: calc(var(--sidebar-width) - 4*var(--inline-chat-section-padding) - 2*var(--inline-chat-info-padding));
+    margin: 0;
+
+    white-space: nowrap;
+    overflow: hidden;
+
+    text-wrap: nowrap;
+    text-overflow: ellipsis;
+}
+.chat-info:hover .chat-name, .chat-info:focus-visible .chat-name {
+    max-width: calc(var(--sidebar-width) - 4*var(--inline-chat-section-padding) - 2*var(--inline-chat-info-padding) - var(--inline-chat-info-gap) - 20px );
+}
+.chat-info:hover .chat-options, .chat-info:focus-visible .chat-options {
+    display: grid;
+}
+.chat-info:has(.chat-options:hover) {
+    background-color: transparent
 }
 .bottom-section a:hover, .bottom-section a:focus-visible {
     background-color: var(--bg-elevated-secondary);
