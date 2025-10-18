@@ -7,11 +7,9 @@ const rootElement = document.getElementById('root');
 
 ReactDOM.createRoot(rootElement).render(
     <>
-        <Sidebar />
-        {/* <div style={{display: "flex"}}>
+        <div style={{display: "flex"}}>
             <Sidebar />
             <ChatbotInteraction />
-        </div> */}
-        {/* <h1>Hello, world!</h1> */}
+        </div>
     </>
 );

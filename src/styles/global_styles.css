@@ -187,6 +187,26 @@
     --scrollbar-color: #0000001a;
     --scrollbar-color-hover: #0003;
 
+    --default-theme-user-msg-bg: var(--message-surface);
+    --default-theme-user-msg-text: var(--text-primary);
+    --default-theme-submit-btn-bg: #000;
+    --default-theme-submit-btn-text: #fff;
+    --default-theme-secondary-btn-bg: #ececec;
+    --default-theme-secondary-btn-text: var(--text-primary);
+    --default-theme-user-selection-bg: oklab(68.2034% -.0561513 -.164103 / .35);
+    --default-theme-attribution-highlight-bg: #ffeeb8;
+    --default-theme-entity-accent: #0169cc;
+
+    --theme-user-msg-bg: var(--default-theme-user-msg-bg);
+    --theme-user-msg-text: var(--default-theme-user-msg-text);
+    --theme-submit-btn-bg: var(--default-theme-submit-btn-bg);
+    --theme-submit-btn-text: var(--default-theme-submit-btn-text);
+    --theme-secondary-btn-bg: var(--default-theme-secondary-btn-bg);
+    --theme-secondary-btn-text: var(--default-theme-secondary-btn-text);
+    --theme-user-selection-bg: var(--default-theme-user-selection-bg);
+    --theme-attribution-highlight-bg: var(--default-theme-attribution-highlight-bg);
+    --theme-entity-accent: var(--default-theme-entity-accent);
+
     font-family: ui-sans-serif,-apple-system,system-ui,Segoe UI,Helvetica,Apple Color Emoji,Arial,sans-serif,Segoe UI Emoji,Segoe UI Symbol
 }
 
