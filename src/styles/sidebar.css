@@ -59,6 +59,10 @@
     justify-content: space-between;
     flex-shrink: 0;
     align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background-color: inherit;
 }
 .top-section button svg {
     fill: var(--bg-elevated-tertiary);
@@ -130,6 +134,11 @@
 }
 .sidebar-toggle-btn:hover .sidebar-toggle-btn__tooltip, .sidebar-toggle-btn:focus-visible .sidebar-toggle-btn__tooltip {
     display: block;
+}
+.middle-section {
+    position: sticky;
+    top: calc(52px + 0.5rem);
+    background-color: inherit;
 }
 .middle-section > * {
     padding: 0.5rem;

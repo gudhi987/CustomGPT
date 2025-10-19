@@ -1,10 +1,12 @@
 .chat-interface {
     box-sizing: border-box;
     flex: 1;
-    padding: 0.5rem 0.5rem 2rem 0.5rem;
+    padding: 0.5rem;
 
     display: flex;
     flex-direction: column;
+
+    height: 100vh;
     
 }
 .chat-interface header {
@@ -25,8 +27,6 @@
 }
 .chat-interactions {
     padding-inline: 1rem;
-    /* flex: 1; */
-    height: calc(100vh - 200px);
     overflow-y: auto;
 }
 .chat-interactions article {
@@ -45,6 +45,8 @@
     padding: 1rem;
 }
 .chat-input {
+    position: sticky;
+    bottom: 2rem;
     margin-inline: auto;
     padding: 0.5rem;
     max-width: 50rem;
@@ -67,6 +69,44 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+}
+.configure-target {
+    padding: 0.5rem;
+
+    display: flex;
+    column-gap: 0.5rem;
+    align-items: center;
+    justify-content: space-between;
+    border-radius: 0.375rem;
+    background-color: var(--bg-primary);
+
+    border: solid 1px var(--border-light);
+}
+.configure-target:focus-visible {
+    outline: solid 1px var(--border-heavy)
+}
+.configure-target:hover {
+    background-color: var(--bg-elevated-secondary);
+    cursor: pointer;
+}
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 5px rgba(255, 0, 0, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 0, 0, 0);
+    }
+}
+.config-status {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: red;
+
+    animation: pulse 2s linear infinite;
 }
 .send-button {
     padding: 0.5rem;
