@@ -137,7 +137,7 @@
 }
 .middle-section {
     position: sticky;
-    top: calc(52px + 0.5rem);
+    top: 52px;
     background-color: inherit;
 }
 .middle-section > * {

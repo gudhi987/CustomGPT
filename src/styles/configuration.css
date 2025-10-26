@@ -61,3 +61,72 @@
 .target-config  .cancel-config, footer .test-config {
     border: solid var(--border-heavy) 1px;
 }
+
+.test-config.loading {
+    position: relative;
+    cursor: not-allowed;
+    opacity: 0.8;
+}
+
+.test-config.loading::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255,255,255,0.3),
+        transparent
+    );
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.response-display {
+    margin: 1rem 0;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.response-display.success {
+    border: 1px solid #4ade80;
+}
+
+.response-display.error {
+    border: 1px solid #ef4444;
+}
+
+.response-header {
+    padding: 0.5rem 1rem;
+    background: #f8fafc;
+}
+
+.response-display.success .response-header {
+    background: #f0fdf4;
+}
+
+.response-display.error .response-header {
+    background: #fef2f2;
+}
+
+.response-header h4 {
+    margin: 0;
+    font-size: 0.875rem;
+    color: #1e293b;
+}
+
+.response-body {
+    margin: 0;
+    padding: 1rem;
+    background: #ffffff;
+    font-family: monospace;
+    font-size: 0.875rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 400px;
+    overflow: auto;
+}
