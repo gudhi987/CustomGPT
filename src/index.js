@@ -7,11 +7,10 @@ import TargetConfiguration from "./components/configuration";
 const rootElement = document.getElementById('root');
 
 ReactDOM.createRoot(rootElement).render(
-    // <>
-    //     <div style={{display: "flex"}}>
-    //         <Sidebar />
-    //         <ChatbotInteraction />
-    //     </div>
-    // </>
-    <TargetConfiguration />
+    <>
+        <div style={{display: "flex"}}>
+            <Sidebar />
+            <ChatbotInteraction />
+        </div>
+    </>
 );

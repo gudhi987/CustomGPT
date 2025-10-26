@@ -105,8 +105,45 @@
     height: 10px;
     border-radius: 50%;
     background-color: red;
-
     animation: pulse 2s linear infinite;
+}
+
+.config-status.saved {
+    background-color: #02ff63;
+    animation: none;
+    box-shadow: 0 0 0 3px rgba(2, 255, 44, 0.12);
+}
+
+.config-saved-label {
+    margin-left: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-accent);
+    align-self: center;
+}
+
+/* Toast that slides in from the right and fades away */
+.toast {
+    position: fixed;
+    bottom: 1rem;
+    right: 1rem;
+    transform: translateX(120%);
+    opacity: 0;
+    background: linear-gradient(180deg, #0366d6, #024fa8);
+    color: white;
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(2, 6, 23, 0.2);
+    z-index: 12000;
+    transition: transform 320ms cubic-bezier(.2,.9,.2,1), opacity 320ms ease;
+    font-size: 0.95rem;
+    pointer-events: auto;
+}
+.toast.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+.toast:focus {
+    outline: 2px solid rgba(255,255,255,0.2);
 }
 .send-button {
     padding: 0.5rem;

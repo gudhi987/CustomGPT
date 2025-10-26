@@ -1,12 +1,12 @@
 import "../styles/configuration.css";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { X, Plus, Trash2 } from "lucide-react";
 
 function makeItem() {
     return { id: Date.now().toString(36) + Math.random().toString(36).slice(2), key: "", value: "" };
 }
 
-function TargetConfiguration() {
+function TargetConfiguration({ onSave, onClose, initialConfig = null }) {
     const [headerConfig, setHeaderConfig] = useState([makeItem()]);
     const [queryConfig, setQueryConfig] = useState([makeItem()]);
     const [method, setMethod] = useState("GET");
@@ -15,8 +15,28 @@ function TargetConfiguration() {
     const [isLoading, setIsLoading] = useState(false);
     const [testResult, setTestResult] = useState(null);
     const [modelType, setModelType] = useState("completions"); // 'completions' or 'chat'
-    const [outputType, setOutputType] = useState("text"); // 'text' | 'json' | 'arrayBuffer'
+    const [outputType, setOutputType] = useState("json"); // 'text' | 'json' | 'arrayBuffer'
     const [responsePath, setResponsePath] = useState("choices[0].text");
+    const [localSaved, setLocalSaved] = useState(false);
+
+    // Populate fields from an initial in-memory configuration when provided by the parent.
+    useEffect(() => {
+        if (!initialConfig) return;
+        try {
+            const saved = initialConfig;
+            if (saved.url) setUrl(saved.url);
+            if (saved.method) setMethod(saved.method);
+            if (saved.bodyContent) setBodyContent(saved.bodyContent);
+            if (saved.headerConfig) setHeaderConfig(saved.headerConfig);
+            if (saved.queryConfig) setQueryConfig(saved.queryConfig);
+            if (saved.modelType) setModelType(saved.modelType);
+            if (saved.outputType) setOutputType(saved.outputType);
+            if (saved.responsePath) setResponsePath(saved.responsePath);
+            if (saved._savedAt) setLocalSaved(true);
+        } catch (e) {
+            // ignore
+        }
+    }, [initialConfig]);
 
     const addHeader = useCallback(() => {
         setHeaderConfig(prev => [...prev, makeItem()]);
@@ -172,10 +192,14 @@ function TargetConfiguration() {
         <div className="target-config" role="dialog" aria-label="Target configuration">
             <header className="tc-header">
                 <h3>Configure HTTP target</h3>
-                <button type="button">
+                <button type="button" onClick={() => onClose && onClose()} aria-label="Close configuration">
                     <X size={20} />
                 </button>
             </header>
+
+            {localSaved && (
+                <div className="saved-banner">Configuration saved (in-memory for this session)</div>
+            )}
 
             <div className="base-config">
                 <div className="method-config">
@@ -302,14 +326,51 @@ function TargetConfiguration() {
             )}
 
             <footer>
-                <button 
-                    type="button" 
-                    className={`test-config ${isLoading ? 'loading' : ''}`} 
-                    onClick={testTarget}
-                    disabled={isLoading}
-                >
-                    {isLoading ? 'Testing...' : 'Test Configuration'}
-                </button>
+                <div style={{display:'flex', gap: '0.5rem', justifyContent:'flex-end', alignItems:'center'}}>
+                    {/* Show Save button only after a successful test */}
+                    {testResult && testResult.ok && (
+                        <button
+                            type="button"
+                            className="save-config"
+                            onClick={() => {
+                                // assemble config to save
+                                const cfg = {
+                                    method,
+                                    url,
+                                    headerConfig,
+                                    queryConfig,
+                                    bodyContent,
+                                    modelType,
+                                    outputType,
+                                    responsePath,
+                                    _savedAt: Date.now()
+                                };
+                                try {
+                                    // Do NOT persist to localStorage or server. Keep config in-memory only (parent state).
+                                    setLocalSaved(true);
+                                    if (onSave) onSave(cfg);
+                                } catch (e) {
+                                    console.error('Failed to notify parent of saved config', e);
+                                }
+                            }}
+                        >
+                            Save Configuration
+                        </button>
+                    )}
+
+                    <button 
+                        type="button" 
+                        className={`test-config ${isLoading ? 'loading' : ''}`} 
+                        onClick={testTarget}
+                        disabled={isLoading}
+                    >
+                        {isLoading ? 'Testing...' : 'Test Configuration'}
+                    </button>
+
+                    <button type="button" className="cancel-config" onClick={() => onClose && onClose()}>
+                        Close
+                    </button>
+                </div>
             </footer>
         </div>
     );

@@ -1,9 +1,18 @@
 import "../styles/interaction.css";
+import { useState, useEffect, useRef } from "react";
+import TargetConfiguration from "./configuration";
 
 function ChatbotInteraction() {
-    let configModalOpen = false;
+    const [configModalOpen, setConfigModalOpen] = useState(false);
+    const [isSaved, setIsSaved] = useState(false);
+    const [savedConfig, setSavedConfig] = useState(null);
+
+    // Do not read or write localStorage/server for sensitive configs. Keep in-memory only.
+    useEffect(() => {
+        // Nothing to load initially; savedConfig remains null until user saves in this session.
+    }, []);
+
     function handleInputAreaHeight(event) {
-        console.log(event.target);
         const value = event.target.value;
         let max_rows = 8;
         let count = 0;
@@ -14,6 +23,48 @@ function ChatbotInteraction() {
         }
         event.target.rows = Math.min(count + 1, max_rows);
     }
+
+    const handleOpenConfig = () => {
+        setConfigModalOpen(true);
+    };
+
+    const handleCloseConfig = () => {
+        setConfigModalOpen(false);
+    };
+
+    const handleSaved = (cfg) => {
+        setIsSaved(true);
+        setSavedConfig(cfg);
+        // show transient toast and close modal
+        showToast('Configuration saved');
+        setConfigModalOpen(false);
+    };
+
+    // Toast state and helpers
+    const [toastMsg, setToastMsg] = useState("");
+    const [toastVisible, setToastVisible] = useState(false);
+    const toastTimerRef = useRef(null);
+
+    const showToast = (msg, ms = 2500) => {
+        if (toastTimerRef.current) {
+            clearTimeout(toastTimerRef.current);
+            toastTimerRef.current = null;
+        }
+        setToastMsg(msg);
+        // small delay to ensure transition applies when re-showing
+        requestAnimationFrame(() => setToastVisible(true));
+        toastTimerRef.current = setTimeout(() => {
+            setToastVisible(false);
+            toastTimerRef.current = null;
+        }, ms);
+    };
+
+    useEffect(() => {
+        return () => {
+            if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+        };
+    }, []);
+
     return (
         <div className="chat-interface">
             <header>
@@ -72,11 +123,11 @@ function ChatbotInteraction() {
                     <textarea className="input-area" placeholder="Ask your custom GPT" rows="1" cols="1" onChange={handleInputAreaHeight}></textarea>
                     <div className="feature-section">
                         <div className="left-section">
-                            <button className="configure-target">
-                                <span>Configure Target</span>
-                                <div className="config-status"></div>
-                            </button>
-                        </div>
+                                <button className="configure-target" onClick={handleOpenConfig} aria-haspopup="dialog">
+                                    <span>Configure Target</span>
+                                    <div className={`config-status ${isSaved ? 'saved' : ''}`}></div>
+                                </button>
+                            </div>
                         <div className="right-section">
                             <button className="send-button" type="sumbit">
                                 <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M8.99992 16V6.41407L5.70696 9.70704C5.31643 10.0976 4.68342 10.0976 4.29289 9.70704C3.90237 9.31652 3.90237 8.6835 4.29289 8.29298L9.29289 3.29298L9.36907 3.22462C9.76184 2.90427 10.3408 2.92686 10.707 3.29298L15.707 8.29298L15.7753 8.36915C16.0957 8.76192 16.0731 9.34092 15.707 9.70704C15.3408 10.0732 14.7618 10.0958 14.3691 9.7754L14.2929 9.70704L10.9999 6.41407V16C10.9999 16.5523 10.5522 17 9.99992 17C9.44764 17 8.99992 16.5523 8.99992 16Z"></path></svg>
@@ -86,6 +137,17 @@ function ChatbotInteraction() {
 
                 </div>
             </footer>
+            {configModalOpen && (
+                <div style={{position:'fixed',inset:0,display:'grid',placeItems:'center',zIndex:9999,background: 'rgba(0,0,0,0.3)'}}>
+                    <div style={{maxHeight:'90vh', overflow:'auto', background:'white', padding:12}}>
+                        <TargetConfiguration initialConfig={savedConfig} onSave={handleSaved} onClose={handleCloseConfig} />
+                    </div>
+                </div>
+            )}
+            {/* Toast notification */}
+            <div className={`toast ${toastVisible ? 'show' : ''}`} role="status" aria-live="polite">
+                {toastMsg}
+            </div>
         </div>
     );
 }

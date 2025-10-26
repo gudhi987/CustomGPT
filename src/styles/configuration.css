@@ -58,6 +58,16 @@
     margin-top: 1rem;
     justify-content: right;
 }
+
+.saved-banner {
+    padding: 0.35rem 0.6rem;
+    background: #e6f4ff;
+    color: #0366d6;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    margin-left: auto;
+    border: 1px solid #d0e8ff;
+}
 .target-config  .cancel-config, footer .test-config {
     border: solid var(--border-heavy) 1px;
 }
