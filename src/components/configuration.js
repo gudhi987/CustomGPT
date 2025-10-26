@@ -346,7 +346,6 @@ function TargetConfiguration({ onSave, onClose, initialConfig = null }) {
                                     _savedAt: Date.now()
                                 };
                                 try {
-                                    // Do NOT persist to localStorage or server. Keep config in-memory only (parent state).
                                     setLocalSaved(true);
                                     if (onSave) onSave(cfg);
                                 } catch (e) {

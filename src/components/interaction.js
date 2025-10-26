@@ -7,7 +7,6 @@ function ChatbotInteraction() {
     const [isSaved, setIsSaved] = useState(false);
     const [savedConfig, setSavedConfig] = useState(null);
 
-    // Do not read or write localStorage/server for sensitive configs. Keep in-memory only.
     useEffect(() => {
         // Nothing to load initially; savedConfig remains null until user saves in this session.
     }, []);
@@ -40,7 +39,6 @@ function ChatbotInteraction() {
         setConfigModalOpen(false);
     };
 
-    // Toast state and helpers
     const [toastMsg, setToastMsg] = useState("");
     const [toastVisible, setToastVisible] = useState(false);
     const toastTimerRef = useRef(null);
