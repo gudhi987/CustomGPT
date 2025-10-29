@@ -16,7 +16,7 @@ function TargetConfiguration({ onSave, onClose, initialConfig = null }) {
     const [testResult, setTestResult] = useState(null);
     const [modelType, setModelType] = useState("completions"); // 'completions' or 'chat'
     const [outputType, setOutputType] = useState("json"); // 'text' | 'json' | 'arrayBuffer'
-    const [responsePath, setResponsePath] = useState("choices[0].text");
+    const [responsePath, setResponsePath] = useState("response.choices[0].text");
     const [localSaved, setLocalSaved] = useState(false);
 
     // Populate fields from an initial in-memory configuration when provided by the parent.
@@ -43,7 +43,10 @@ function TargetConfiguration({ onSave, onClose, initialConfig = null }) {
     }, []);
 
     const addQuery = useCallback(() => {
-        setQueryConfig(prev => [...prev, makeItem()]);
+        const newItem = makeItem();
+        newItem.key = "prompt"; // Default key for prompt
+        newItem.value = "{{prompt}}"; // Default placeholder
+        setQueryConfig(prev => [...prev, newItem]);
     }, []);
 
     const updateHeader = useCallback((id, field, value) => {
@@ -69,6 +72,40 @@ function TargetConfiguration({ onSave, onClose, initialConfig = null }) {
             return;
         }
 
+        // Validate {{prompt}} placeholder presence
+        const promptInQueries = queryConfig.some(q => q.value && q.value.includes("{{prompt}}"));
+        const promptInBody = bodyContent && bodyContent.includes("{{prompt}}");
+        
+        if (!promptInQueries && !promptInBody) {
+            setTestResult({ 
+                error: "The placeholder {{prompt}} must be present in either query parameters or body content to indicate where user input should be inserted. Add it to either:\n" +
+                      "- Query parameter value: {{prompt}}\n" +
+                      "- Body content: directly as {{prompt}} for text, or {\"prompt\": \"{{prompt}}\"} for JSON"
+            });
+            return;
+        }
+        
+        if (promptInQueries && promptInBody) {
+            setTestResult({ 
+                error: "The placeholder {{prompt}} should only appear once, either in query parameters or body content, not both. Please remove it from one location."
+            });
+            return;
+        }
+
+        // Validate {{prompt}} placeholder presence
+        // const promptInQueries = queryConfig.some(q => q.value.includes("{{prompt}}"));
+        // const promptInBody = bodyContent.includes("{{prompt}}");
+        
+        if (!promptInQueries && !promptInBody) {
+            setTestResult({ error: "The placeholder {{prompt}} must be present in either query parameters or body content to indicate where user input should be inserted." });
+            return;
+        }
+        
+        if (promptInQueries && promptInBody) {
+            setTestResult({ error: "The placeholder {{prompt}} should only appear once, either in query parameters or body content, not both." });
+            return;
+        }
+
         try {
             new URL(url); // validate URL format
         } catch (e) {
@@ -85,6 +122,16 @@ function TargetConfiguration({ onSave, onClose, initialConfig = null }) {
                 setTestResult({ error: "Invalid JSON in request body" });
                 return;
             }
+        }
+
+        // response parsing helper
+        if(!responsePath) {
+            setTestResult({ error: "Response mapping expression is required to extract the desired value from the response." });
+            return;
+        }
+        if(outputType === "text" && responsePath !== "response") {
+            setTestResult({ error: "When output type is 'text', the response mapping must be 'response' to access the raw text." });
+            return;
         }
 
     setIsLoading(true);
@@ -143,6 +190,7 @@ function TargetConfiguration({ onSave, onClose, initialConfig = null }) {
             });
 
             const envelope = await proxyResp.json();
+            // console.log(envelope);
 
             // envelope.body may be string or object. Attempt to parse if string and outputType is json
             let bodyObj = envelope.body;
@@ -263,7 +311,7 @@ function TargetConfiguration({ onSave, onClose, initialConfig = null }) {
                             onChange={(e) => updateQuery(id, "key", e.target.value)}
                         />
                         <input
-                            placeholder="Value"
+                            placeholder="Use {{prompt}} to indicate where user input should be inserted"
                             value={value}
                             onChange={(e) => updateQuery(id, "value", e.target.value)}
                         />
@@ -275,11 +323,33 @@ function TargetConfiguration({ onSave, onClose, initialConfig = null }) {
             </div>
 
             <div className="body-config">
-                <header><h4>Body</h4></header>
-                <textarea rows="10" placeholder='Enter request body (JSON, text, XML, etc.)' value={bodyContent} onChange={(e) => setBodyContent(e.target.value)} />
+                <header>
+                    <h4>Body</h4>
+                    {method !== 'GET' && (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                const contentTypeHeader = headerConfig.find(h => h.key.toLowerCase() === 'content-type');
+                                const isJson = contentTypeHeader?.value?.includes('application/json');
+                                const defaultContent = isJson ? 
+                                    JSON.stringify({ prompt: "{{prompt}}" }, null, 2) : 
+                                    "{{prompt}}";
+                                setBodyContent(defaultContent);
+                            }}
+                        >
+                            <Plus size={16} /> <span>Add Prompt Template</span>
+                        </button>
+                    )}
+                </header>
+                <textarea 
+                    rows="10" 
+                    placeholder='Enter request body (JSON, text, XML, etc.). Use {{prompt}} to indicate where user input should be inserted.'
+                    value={bodyContent} 
+                    onChange={(e) => setBodyContent(e.target.value)} 
+                />
             </div>
 
-            <div className="model-config" style={{display: 'flex', gap: '1rem', alignItems: 'center', marginTop: '0.5rem'}}>
+            <div className="model-config" style={{marginTop: '0.5rem'}}>
                 <div style={{display:'flex', alignItems:'center', gap:8}}>
                     <label style={{display:'block', fontSize:'.85rem', marginRight:6}}>Model</label>
                     <label style={{display:'inline-flex', alignItems:'center', gap:6, cursor:'pointer'}}>
@@ -289,7 +359,7 @@ function TargetConfiguration({ onSave, onClose, initialConfig = null }) {
                 </div>
 
                 <div>
-                    <label style={{display:'block', fontSize:'.85rem'}}>Output</label>
+                    <label style={{display:'block', fontSize:'.85rem', marginTop: '0.5rem'}}>Output</label>
                     <select value={outputType} onChange={(e) => setOutputType(e.target.value)}>
                         <option value="text">text</option>
                         <option value="json">json</option>

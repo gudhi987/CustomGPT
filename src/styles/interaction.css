@@ -123,6 +123,35 @@
     align-self: center;
 }
 
+.send-button {
+    padding: 0.5rem;
+    border-radius: 50%;
+    background-color: var(--bg-primary-inverted);
+
+    display: grid;
+    place-items: center;
+    border: none;
+}
+.send-button:focus-visible {
+    outline: solid 3px var(--border-heavy);
+}
+.send-button:hover {
+    cursor: pointer;
+}
+.send-button svg {
+    width: 20px;
+    height: 20px;
+}
+.send-button svg:nth-child(1) {
+    fill: var(--bg-primary);
+}
+.send-button svg:nth-child(2) {
+    fill: var(--text-primary);
+}
+.send-button.processing {
+    background-color: var(--surface-hover);
+}
+
 /* Toast that slides in from the right and fades away */
 .toast {
     position: fixed;
@@ -149,25 +178,6 @@
 }
 .toast:focus {
     outline: 2px solid rgba(255,255,255,0.2);
-}
-.send-button {
-    padding: 0.5rem;
-    border-radius: 50%;
-    background-color: var(--bg-primary-inverted);
-
-    display: grid;
-    place-items: center;
-}
-.send-button:focus-visible {
-    outline: solid 3px var(--border-heavy)
-}
-.send-button:hover {
-    cursor: pointer;
-}
-.send-button svg {
-    width: 20px;
-    height: 20px;
-    fill: var(--bg-primary);
 }
 .configuration-modal {
     margin-block: 5vh;
