@@ -1,7 +1,5 @@
 .target-config {
-    margin-inline: auto;
     padding: 1rem;
-    max-width: 40rem;
     border: solid var(--border-heavy) 1px;
 }
 .target-config :is(h1, h2, h3, h4, h5, h6) {

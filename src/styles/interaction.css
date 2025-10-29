@@ -27,6 +27,7 @@
 }
 .chat-interactions {
     padding-inline: 1rem;
+    flex: 1;
     overflow-y: auto;
 }
 .chat-interactions article {
@@ -37,6 +38,7 @@
     padding: 1rem;
     margin-left: auto;
     max-width: 30rem;
+    width: fit-content;
     border-radius: 1rem;
     background-color: var(--theme-user-msg-bg);
     color: var(--theme-user-msg-text);;
@@ -124,7 +126,7 @@
 /* Toast that slides in from the right and fades away */
 .toast {
     position: fixed;
-    bottom: 1rem;
+    bottom: 8rem;
     right: 1rem;
     transform: translateX(120%);
     opacity: 0;
@@ -141,6 +143,9 @@
 .toast.show {
     transform: translateX(0);
     opacity: 1;
+}
+.toast.config-err {
+    background: linear-gradient(18deg,rgba(255, 0, 0, 0.7),rgb(230, 60, 60));
 }
 .toast:focus {
     outline: 2px solid rgba(255,255,255,0.2);
@@ -163,4 +168,13 @@
     width: 20px;
     height: 20px;
     fill: var(--bg-primary);
+}
+.configuration-modal {
+    margin-block: 5vh;
+    margin-inline: auto;
+    max-width: 40rem;
+    height: 90vh;
+    overflow: auto;
+    background-color: white;
+    padding: 12;
 }
