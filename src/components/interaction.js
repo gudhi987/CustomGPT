@@ -10,6 +10,7 @@ function ChatbotInteraction() {
     const [messages, setMessages] = useState([]);
     // Track current input
     const [inputValue, setInputValue] = useState("");
+    const [inputHeight, setInputHeight] = useState(1);
     const [isProcessing, setIsProcessing] = useState(false);
 
     useEffect(() => {
@@ -25,7 +26,8 @@ function ChatbotInteraction() {
                 count++;
             }
         }
-        event.target.rows = Math.min(count + 1, max_rows);
+        // event.target.rows = Math.min(count + 1, max_rows);
+        setInputHeight(Math.min(count + 1, max_rows));
         setInputValue(value);
     }
 
@@ -75,7 +77,8 @@ function ChatbotInteraction() {
                 showToast('Please configure and save your target before sending a message.', 2500);
                 return;
             }
-            const prompt = inputValue.trim();
+            const prompt = inputValue;
+            console.log("Prompt submitted:", prompt);
             if (!prompt) {
                 showToast('User input cannot be empty');
                 return ;
@@ -89,6 +92,7 @@ function ChatbotInteraction() {
                 { role: 'user', content: prompt, type: modelType }
             ]);
             setInputValue("");
+            setInputHeight(1);
 
             // Prepare request for completion/chat
             let requestBody = {};
@@ -258,7 +262,7 @@ function ChatbotInteraction() {
                 </article> */}
                 {messages.map((message, index) => (
                     <article key={index}>
-                        <div className={message.role === 'user' ? 'user-message' : 'assistant-message'}>
+                        <div className={message.role === 'user' ? 'whitespace-prewrap user-message' : 'whitespace-prewrap assistant-message'}>
                             {message.role === 'assistant' ? (
                                 <div className="markdown prose dark:prose-invert w-full break-words light markdown-new-styling">
                                     {message.content}
@@ -275,9 +279,9 @@ function ChatbotInteraction() {
             </section>
             <footer>
                 <div className="chat-input">
-                    <textarea className="input-area" placeholder="Ask your custom GPT" rows="1" cols="1" value={inputValue} onChange={(event) => {
+                    <textarea className="input-area" placeholder="Ask your custom GPT" rows={inputHeight} cols="1" value={inputValue} onChange={(event) => {
                         handleInputAreaHeight(event);
-                        setInputValue(event.target.value);
+                        // setInputValue(event.target.value);
                     }}></textarea>
                     <div className="feature-section">
                         <div className="left-section">
@@ -297,7 +301,7 @@ function ChatbotInteraction() {
                 </div>
             </footer>
             {configModalOpen && (
-                <div style={{position:'fixed',inset:0,zIndex:9999,background: 'rgba(0,0,0,0.3)',border: '1px solid red'}}>
+                <div style={{position:'fixed',inset:0,zIndex:9999,background: 'rgba(0,0,0,0.3)'}}>
                     <div className="configuration-modal">
                         <TargetConfiguration initialConfig={savedConfig} onSave={handleSaved} onClose={handleCloseConfig} />
                     </div>
