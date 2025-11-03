@@ -265,10 +265,12 @@ function ChatbotInteraction() {
             </section>
             <footer>
                 <div className="chat-input">
-                    <div contentEditable="true" className="input-area" placeholder="Ask your custom GPT" value={inputValue} onChange={(event) => {
-                        // handleInputAreaHeight(event);
-                        setInputValue(event.target.value);
-                    }}></div>
+                    <span contentEditable="true" className="input-area" placeholder="Ask your custom GPT" 
+                    onInput={ 
+                        (event) => {
+                            setInputValue(event.target.textContent);
+                        }
+                    }></span>
                     <div className="feature-section">
                         <div className="left-section">
                                 <button className="configure-target" onClick={handleOpenConfig} aria-haspopup="dialog">

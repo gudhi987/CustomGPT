@@ -67,6 +67,8 @@
     font-size: var(--font-size);
     max-height: calc(var(--max-rows)*var(--font-size) + (var(--max-rows) - 1)*0.25rem + 2*var(--padding));
     overflow-y: auto;
+    display: inline-block;
+    word-break: break-word;
 }
 .input-area[contenteditable="true"]:empty::before {
     content: attr(placeholder);
