@@ -56,15 +56,23 @@
     padding: 0.5rem;
     max-width: 50rem;
     border: solid 1px var(--border-heavy);
-    border-radius: 0.5rem;;
+    border-radius: 0.5rem;
 }
 .input-area {
+    --padding: 0.5rem;
+    --font-size: 13.33px;
+    --max-rows: 8;
     border-radius: inherit;
-    padding: 0.5rem;
+    padding: var(--padding);
+    font-size: var(--font-size);
+    max-height: calc(var(--max-rows)*var(--font-size) + (var(--max-rows) - 1)*0.25rem + 2*var(--padding));
+    overflow-y: auto;
+}
+.input-area[contenteditable="true"]:empty::before {
+    content: attr(placeholder);
+    pointer-events: none;
+    color: var(--text-secondary);
     display: block;
-    width: 100%;
-    resize: none;
-    border: none;
 }
 .input-area:focus {
     outline: none;

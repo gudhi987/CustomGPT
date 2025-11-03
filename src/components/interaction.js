@@ -17,20 +17,6 @@ function ChatbotInteraction() {
         // Nothing to load initially; savedConfig remains null until user saves in this session.
     }, []);
 
-    function handleInputAreaHeight(event) {
-        const value = event.target.value;
-        let max_rows = 8;
-        let count = 0;
-        for (let i = 0; i < value.length; i++) {
-            if (value[i] === "\n") {
-                count++;
-            }
-        }
-        // event.target.rows = Math.min(count + 1, max_rows);
-        setInputHeight(Math.min(count + 1, max_rows));
-        setInputValue(value);
-    }
-
     const handleOpenConfig = () => {
         setConfigModalOpen(true);
     };
@@ -279,10 +265,10 @@ function ChatbotInteraction() {
             </section>
             <footer>
                 <div className="chat-input">
-                    <textarea className="input-area" placeholder="Ask your custom GPT" rows={inputHeight} cols="1" value={inputValue} onChange={(event) => {
-                        handleInputAreaHeight(event);
-                        // setInputValue(event.target.value);
-                    }}></textarea>
+                    <div contentEditable="true" className="input-area" placeholder="Ask your custom GPT" value={inputValue} onChange={(event) => {
+                        // handleInputAreaHeight(event);
+                        setInputValue(event.target.value);
+                    }}></div>
                     <div className="feature-section">
                         <div className="left-section">
                                 <button className="configure-target" onClick={handleOpenConfig} aria-haspopup="dialog">
