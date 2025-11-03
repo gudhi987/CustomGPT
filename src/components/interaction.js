@@ -10,7 +10,7 @@ function ChatbotInteraction() {
     const [messages, setMessages] = useState([]);
     // Track current input
     const [inputValue, setInputValue] = useState("");
-    const [inputHeight, setInputHeight] = useState(1);
+    const inputRef = useRef(null);
     const [isProcessing, setIsProcessing] = useState(false);
 
     useEffect(() => {
@@ -78,8 +78,7 @@ function ChatbotInteraction() {
                 { role: 'user', content: prompt, type: modelType }
             ]);
             setInputValue("");
-            setInputHeight(1);
-
+            inputRef.current.textContent = "";
             // Prepare request for completion/chat
             let requestBody = {};
             let responsePath = savedConfig?.responsePath || '';
@@ -265,7 +264,7 @@ function ChatbotInteraction() {
             </section>
             <footer>
                 <div className="chat-input">
-                    <span contentEditable="true" className="input-area" placeholder="Ask your custom GPT" 
+                    <span contentEditable="true" className="input-area" placeholder="Ask your custom GPT" ref={inputRef}
                     onInput={ 
                         (event) => {
                             setInputValue(event.target.textContent);
