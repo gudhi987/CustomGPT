@@ -268,6 +268,9 @@ function ChatbotInteraction() {
                     onInput={ 
                         (event) => {
                             setInputValue(event.target.textContent);
+                            if(!event.target.textContent) {
+                                event.target.innerHTML = "";
+                            }
                         }
                     }></span>
                     <div className="feature-section">
