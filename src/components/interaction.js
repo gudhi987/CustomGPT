@@ -267,10 +267,12 @@ function ChatbotInteraction() {
                     <span contentEditable="true" className="input-area" placeholder="Ask your custom GPT" ref={inputRef}
                     onInput={ 
                         (event) => {
-                            setInputValue(event.target.textContent);
                             if(!event.target.textContent) {
                                 event.target.innerHTML = "";
+                                setInputValue("");
+                                return;
                             }
+                            setInputValue(event.target.innerText);
                         }
                     }></span>
                     <div className="feature-section">
