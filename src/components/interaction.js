@@ -11,11 +11,21 @@ function ChatbotInteraction() {
     // Track current input
     const [inputValue, setInputValue] = useState("");
     const inputRef = useRef(null);
+    const sectionRef = useRef(null);
+    const buttonRef = useRef(null);
     const [isProcessing, setIsProcessing] = useState(false);
+    const lastCallRef = useRef(0);
+    const maximumScrollValueRef = useRef(0);
 
+    // Initialize scroll position and calculate maximum scroll value
     useEffect(() => {
-        // Nothing to load initially; savedConfig remains null until user saves in this session.
-    }, []);
+        if (sectionRef.current) {
+            const totalParentContentHeight = sectionRef.current.clientHeight;
+            const totalContentHeight = sectionRef.current.scrollHeight;
+            const maximumScrollValue = Math.max(0, totalContentHeight - totalParentContentHeight);
+            maximumScrollValueRef.current = maximumScrollValue;
+        }
+    }, [messages]);
 
     const handleOpenConfig = () => {
         setConfigModalOpen(true);
@@ -36,6 +46,23 @@ function ChatbotInteraction() {
     const [toastMsg, setToastMsg] = useState("");
     const [toastVisible, setToastVisible] = useState(false);
     const toastTimerRef = useRef(null);
+
+    const handleOnScroll = (event) => {
+        let now = Date.now();
+        if (now - lastCallRef.current < 100) return;
+        lastCallRef.current = now;
+        const currScrollPosition = event.target.scrollTop;
+        // console.log(currScrollPosition);
+        if (maximumScrollValueRef.current - currScrollPosition >= 100) {
+            if (buttonRef.current) {
+                buttonRef.current.style.display = "grid";
+            }
+        } else {
+            if (buttonRef.current) {
+                buttonRef.current.style.display = "none";
+            }
+        }
+    }
 
     const showToast = (msg, ms = 2500) => {
         if (toastTimerRef.current) {
@@ -150,6 +177,10 @@ function ChatbotInteraction() {
 
             // Indicate processing state
             setIsProcessing(true);
+            setMessages(prev => [
+                    ...prev,
+                    { role: 'processing', content: '', type: '' }
+                ]);
 
             // Send request via proxy
             try {
@@ -179,12 +210,12 @@ function ChatbotInteraction() {
                     extracted = undefined;
                 }
                 setMessages(prev => [
-                    ...prev,
+                    ...prev.filter(m => m.role !== 'processing'),
                     { role: 'assistant', content: typeof extracted === 'undefined' ? '(no response)' : (typeof extracted === 'object' ? JSON.stringify(extracted, null, 2) : String(extracted)), type: modelType }
                 ]);
             } catch (err) {
                 setMessages(prev => [
-                    ...prev,
+                    ...prev.filter(m => m.role !== 'processing'),
                     { role: 'assistant', content: 'Error: ' + (err?.message || err), type: modelType }
                 ]);
             }
@@ -198,7 +229,7 @@ function ChatbotInteraction() {
             <header>
                 <p>CustomGPT</p>
             </header>
-            <section className="chat-interactions">
+            <section className="chat-interactions" ref={sectionRef} onScroll={handleOnScroll}>
                 {/* <article>
                     <div className="user-message">
                         A "text area" refers to a multi-line text input field commonly found in graphical user interfaces and web forms. It allows users to enter longer amounts of text, unlike single-line text input fields (often called "text boxes" or "input fields").
@@ -248,12 +279,12 @@ function ChatbotInteraction() {
                 {messages.map((message, index) => (
                     <article key={index}>
                         <div className={message.role === 'user' ? 'whitespace-prewrap user-message' : 'whitespace-prewrap assistant-message'}>
-                            {message.role === 'assistant' ? (
+                            {message.role === 'processing' ? (<div className="assistant-processing-shimmer"></div>) : (
+                               message.role === "assistant" ? (
                                 <div className="markdown prose dark:prose-invert w-full break-words light markdown-new-styling">
                                     {message.content}
                                 </div>
-                            ) : (
-                                message.content
+                            ) : (message.content)
                             )}
                         </div>
                     </article>
@@ -261,6 +292,15 @@ function ChatbotInteraction() {
                 {/* Add a <br/> after completion conversations */}
                 {messages.length > 0 && messages[messages.length - 1].type === 'completions' && <br/>}
                 {/* Show welcome message if no messages */}
+
+                {/* ScrollToBottom button that pop up when the scroll bar is about a certain height.  */}
+                <button className="scroll-to-bottom" ref={buttonRef} onClick={(event) => {
+                    if (sectionRef.current) {
+                        sectionRef.current.scrollTop = maximumScrollValueRef.current;
+                    }
+                }}>
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="white" xmlns="http://www.w3.org/2000/svg" className="icon text-token-text-primary"><path d="M9.33468 3.33333C9.33468 2.96617 9.6326 2.66847 9.99972 2.66829C10.367 2.66829 10.6648 2.96606 10.6648 3.33333V15.0609L15.363 10.3626L15.4675 10.2777C15.7255 10.1074 16.0762 10.1357 16.3034 10.3626C16.5631 10.6223 16.5631 11.0443 16.3034 11.304L10.4704 17.137C10.2108 17.3967 9.7897 17.3966 9.52999 17.137L3.69601 11.304L3.61105 11.1995C3.44054 10.9414 3.46874 10.5899 3.69601 10.3626C3.92328 10.1354 4.27479 10.1072 4.53292 10.2777L4.63741 10.3626L9.33468 15.0599V3.33333Z"></path></svg>
+                </button>
             </section>
             <footer>
                 <div className="chat-input">

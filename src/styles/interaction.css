@@ -29,6 +29,7 @@
     padding-inline: 1rem;
     flex: 1;
     overflow-y: auto;
+    scroll-behavior: smooth;
 }
 .chat-interactions article {
     margin-inline: auto;
@@ -165,7 +166,40 @@
 .send-button.processing {
     background-color: var(--surface-hover);
 }
+.assistant-processing-shimmer {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--bg-primary-inverted);
+  
+  animation: scale-animation infinite ease-in-out 2000ms; 
+}
 
+@keyframes scale-animation {
+  0%, 100% {
+    scale: 1;
+  }
+  50% {
+    scale: 0.75;
+  }
+}
+.scroll-to-bottom {
+    position: sticky;
+    bottom: 0.5rem;
+    left: 50%;
+    transform: translate(-50%);
+    
+    width: 35px;
+    height: 35px;
+    background: var(--bg-primary-inverted);
+    
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    display: none;
+
+    cursor: pointer;
+}
 /* Toast that slides in from the right and fades away */
 .toast {
     position: fixed;
