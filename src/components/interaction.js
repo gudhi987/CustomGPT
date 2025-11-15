@@ -120,8 +120,11 @@ function ChatbotInteraction() {
             let baseUrl = new URL(url);
             // Replace {{prompt}} in query parameters
             queryParams.forEach(q => {
-                const paramValue = q.value.replace("{{prompt}}", encodeURIComponent(prompt));
-                baseUrl.searchParams.append(q.key, paramValue);
+                let queryValue = q.value;
+                if (queryValue.includes("{{prompt}}")) {
+                    queryValue = encodeURIComponent(prompt);
+                }
+                baseUrl.searchParams.append(q.key, queryValue);
             });
 
             if (modelType === 'chat') {
@@ -150,7 +153,9 @@ function ChatbotInteraction() {
                             const replacePromptInObject = (obj) => {
                                 Object.keys(obj).forEach(key => {
                                     if (typeof obj[key] === 'string') {
-                                        obj[key] = obj[key].replace("{{prompt}}", prompt);
+                                        if(obj[key].includes("{{prompt}}")) {
+                                            obj[key] = prompt;
+                                        }
                                     } else if (typeof obj[key] === 'object' && obj[key] !== null) {
                                         replacePromptInObject(obj[key]);
                                     }
@@ -160,7 +165,7 @@ function ChatbotInteraction() {
                             requestBody = bodyTemplate;
                         } else {
                             // For plain text body, simple replacement
-                            requestBody = savedConfig.bodyContent.replace("{{prompt}}", prompt);
+                            requestBody = prompt;
                         }
                     } else {
                         // No {{prompt}} found, use the old behavior
@@ -171,7 +176,7 @@ function ChatbotInteraction() {
                     }
                 } catch {
                     // fallback: treat as string and try prompt replacement
-                    requestBody = savedConfig.bodyContent.replace("{{prompt}}", prompt);
+                    requestBody = prompt;
                 }
             }
 
@@ -191,6 +196,7 @@ function ChatbotInteraction() {
                     body: requestBody,
                     responseType: outputType
                 };
+                console.log("Proxy request:", proxyReq);
                 const proxyResp = await fetch('http://localhost:3000/proxy', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

@@ -200,6 +200,9 @@
 
     cursor: pointer;
 }
+.scroll-to-bottom:focus-visible {
+    outline: solid 3px var(--border-heavy);
+}
 /* Toast that slides in from the right and fades away */
 .toast {
     position: fixed;

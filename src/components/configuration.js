@@ -95,16 +95,6 @@ function TargetConfiguration({ onSave, onClose, initialConfig = null }) {
         // Validate {{prompt}} placeholder presence
         // const promptInQueries = queryConfig.some(q => q.value.includes("{{prompt}}"));
         // const promptInBody = bodyContent.includes("{{prompt}}");
-        
-        if (!promptInQueries && !promptInBody) {
-            setTestResult({ error: "The placeholder {{prompt}} must be present in either query parameters or body content to indicate where user input should be inserted." });
-            return;
-        }
-        
-        if (promptInQueries && promptInBody) {
-            setTestResult({ error: "The placeholder {{prompt}} should only appear once, either in query parameters or body content, not both." });
-            return;
-        }
 
         try {
             new URL(url); // validate URL format
