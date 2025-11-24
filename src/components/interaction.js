@@ -320,7 +320,21 @@ function ChatbotInteraction() {
                             }
                             setInputValue(event.target.innerText);
                         }
-                    }></span>
+                    }
+                    onPaste={(event) => {
+                        event.preventDefault();
+                        const clipBoardItem = navigator.clipboard.read();
+                        clipBoardItem.then((data) => {
+                            const plainText = data[0].getType("text/plain");
+                            plainText.then((data) => data.text()).then((text) => {
+                                setInputValue((prev) => prev + text);
+                                inputRef.current.innerText += text;
+                            });
+                        })
+                        .catch((err) => {
+                            console.error('Failed to read clipboard contents: ', err);
+                        })
+                    }}></span>
                     <div className="feature-section">
                         <div className="left-section">
                                 <button className="configure-target" onClick={handleOpenConfig} aria-haspopup="dialog">
