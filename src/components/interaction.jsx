@@ -253,17 +253,9 @@ function ChatbotInteraction() {
                     }
                     onPaste={(event) => {
                         event.preventDefault();
-                        const clipBoardItem = navigator.clipboard.read();
-                        clipBoardItem.then((data) => {
-                            const plainText = data[0].getType("text/plain");
-                            plainText.then((data) => data.text()).then((text) => {
-                                setInputValue((prev) => prev + text);
-                                inputRef.current.innerText += text;
-                            });
-                        })
-                        .catch((err) => {
-                            console.error('Failed to read clipboard contents: ', err);
-                        })
+                        
+                        const text = event.clipboardData.getData('text/plain');
+                        document.execCommand('insertText', false, text);
                     }}></span>
                     <div className="feature-section">
                         <div className="left-section">
