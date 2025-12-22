@@ -1,13 +1,24 @@
 import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
+import { connectDB } from "./db.js";
+import chatsRouter from "./routes/chats.js";
 
 const app = express();
+
+// Initialize database connection
+connectDB().catch(err => {
+	console.error("Failed to initialize database connection:", err.message);
+	// App will continue running, routes will handle DB unavailability
+});
 
 // Middlewares
 app.use(cors());
 app.use(bodyParser.json({ limit: "2mb" }));
 app.use(bodyParser.urlencoded({ extended: true }));
+
+// API Routes
+app.use("/api", chatsRouter);
 
 // simple health route
 app.get("/health", (_req, res) => {

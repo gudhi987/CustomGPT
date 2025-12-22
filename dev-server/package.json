@@ -12,6 +12,9 @@
   "dependencies": {
     "body-parser": "^2.2.0",
     "cors": "^2.8.5",
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "mongoose": "^8.0.0",
+    "mongodb": "^6.0.0",
+    "uuid": "^9.0.0"
   }
 }

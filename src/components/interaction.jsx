@@ -256,6 +256,9 @@ function ChatbotInteraction() {
                         
                         const text = event.clipboardData.getData('text/plain');
                         document.execCommand('insertText', false, text);
+                    }}
+                    onKeyDown={(event) => {
+                        if(!event.shiftKey && event.key==="Enter") submitUserRequest(event);
                     }}></span>
                     <div className="feature-section">
                         <div className="left-section">
