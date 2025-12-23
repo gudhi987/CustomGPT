@@ -1,9 +1,12 @@
 import "../styles/interaction.css";
 import { useState, useEffect, useRef } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import Markdown from "react-markdown";
 import TargetConfiguration from "./configuration.jsx";
 
 function ChatbotInteraction() {
+    const navigate = useNavigate();
+    const { chatId } = useParams();
     const [configModalOpen, setConfigModalOpen] = useState(false);
     const [isSaved, setIsSaved] = useState(false);
     const [savedConfig, setSavedConfig] = useState(null);
@@ -11,6 +14,125 @@ function ChatbotInteraction() {
     const [messages, setMessages] = useState([]);
     // Track current input
     const [inputValue, setInputValue] = useState("");
+    const [currentChatId, setCurrentChatId] = useState(chatId || null);
+    const [hasSubmittedFirst, setHasSubmittedFirst] = useState(!!chatId);
+    const [chatLoadError, setChatLoadError] = useState(false);
+    const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+    const newChatIdRef = useRef(null);
+
+    // Load chat history when chatId changes
+    useEffect(() => {
+        if (chatId) {
+            // Skip loading if this is a newly created chat
+            if (newChatIdRef.current === chatId) {
+                newChatIdRef.current = null;
+                setIsLoadingMessages(false);
+                return;
+            }
+            setIsLoadingMessages(true);
+            const loadChatHistory = async () => {
+                // Clear messages at the very start of loading
+                setMessages([]);
+                try {
+                    console.log('Fetching chat history for:', chatId);
+                    const res = await fetch(`http://localhost:3000/api/chats/${chatId}`);
+                    const data = await res.json();
+                    
+                    console.log('Chat data received:', data);
+                    
+                    if (data.ok && data.chat) {
+                        // Chat found, clear any previous errors
+                        setChatLoadError(false);
+                        
+                        // Load messages from database if they exist
+                        if (data.chat.messages && data.chat.messages.length > 0) {
+                            console.log('Messages found:', data.chat.messages.length);
+                            
+                            // Build hierarchical message order based on parent_id
+                            const messageMap = {};
+                            const rootMessages = [];
+                            
+                            data.chat.messages.forEach(msg => {
+                                messageMap[msg.message_id] = msg;
+                            });
+                            
+                            data.chat.messages.forEach(msg => {
+                                if (msg.parent_id === 'root' || msg.parent_id === '' || !messageMap[msg.parent_id]) {
+                                    rootMessages.push(msg.message_id);
+                                }
+                            });
+                            
+                            // Build ordered message list, excluding system message from display
+                            const orderedMessages = [];
+                            const visited = new Set();
+                            
+                            const buildHierarchy = (messageId) => {
+                                if (visited.has(messageId) || !messageMap[messageId]) return;
+                                visited.add(messageId);
+                                
+                                const msg = messageMap[messageId];
+                                
+                                // Skip system message but continue building hierarchy
+                                if (msg.role !== 'system') {
+                                    orderedMessages.push({
+                                        role: msg.role || (msg.interaction_type === 'chat' ? 'user' : 'assistant'),
+                                        content: msg.message_content,
+                                        type: msg.interaction_type,
+                                        message_id: msg.message_id,
+                                        parent_id: msg.parent_id
+                                    });
+                                }
+                                
+                                // Find children and add them
+                                data.chat.messages.forEach(m => {
+                                    if (m.parent_id === messageId) {
+                                        buildHierarchy(m.message_id);
+                                    }
+                                });
+                            };
+                            
+                            rootMessages.forEach(msgId => buildHierarchy(msgId));
+                            
+                            console.log('Converted messages:', orderedMessages);
+                            setMessages(orderedMessages);
+                        } else {
+                            console.log('No messages in chat');
+                            setMessages([]);
+                        }
+                        setIsLoadingMessages(false);
+                    } else {
+                        console.error('Failed to fetch chat:', data.message || 'Chat not found');
+                        setChatLoadError(true);
+                        setIsLoadingMessages(false);
+                        // Redirect to home page after a short delay to allow error message to display
+                        setTimeout(() => {
+                            navigate('/');
+                        }, 1500);
+                    }
+                } catch (err) {
+                    console.error('Error loading chat history:', err);
+                    setChatLoadError(true);
+                    setIsLoadingMessages(false);
+                    // Redirect to home page after a short delay
+                    setTimeout(() => {
+                        navigate('/');
+                    }, 1500);
+                }
+            };
+            loadChatHistory();
+        }
+    }, [chatId, navigate]);
+
+    // Clear messages when returning to home (no chatId)
+    useEffect(() => {
+        if (!chatId) {
+            setMessages([]);
+            setChatLoadError(false);
+            setCurrentChatId(null);
+            setHasSubmittedFirst(false);
+        }
+    }, [chatId]);
+
     const inputRef = useRef(null);
     const sectionRef = useRef(null);
     const buttonRef = useRef(null);
@@ -20,12 +142,18 @@ function ChatbotInteraction() {
 
     // Initialize scroll position and calculate maximum scroll value
     useEffect(() => {
-        if (sectionRef.current) {
-            const totalParentContentHeight = sectionRef.current.clientHeight;
-            const totalContentHeight = sectionRef.current.scrollHeight;
-            const maximumScrollValue = Math.max(0, totalContentHeight - totalParentContentHeight);
-            maximumScrollValueRef.current = maximumScrollValue;
-        }
+        const updateMaximumScrollValue = () => {
+            if (sectionRef.current) {
+                const totalParentContentHeight = sectionRef.current.clientHeight;
+                const totalContentHeight = sectionRef.current.scrollHeight;
+                const maximumScrollValue = Math.max(0, totalContentHeight - totalParentContentHeight);
+                maximumScrollValueRef.current = maximumScrollValue;
+            }
+        };
+        
+        updateMaximumScrollValue();
+        window.addEventListener('resize', updateMaximumScrollValue);
+        return () => window.removeEventListener('resize', updateMaximumScrollValue);
     }, [messages]);
 
     const handleOpenConfig = () => {
@@ -96,12 +224,55 @@ function ChatbotInteraction() {
             }
 
             const modelType = savedConfig?.modelType || 'completions';
+            
+            // Generate a unique message_id for the user message
+            const userMessageId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            
             setMessages(prev => [
                 ...prev,
-                { role: 'user', content: prompt, type: modelType }
+                { role: 'user', content: prompt, type: modelType, message_id: userMessageId, parent_id: prev.length > 0 ? prev[prev.length - 1].message_id || 'root' : 'root' }
             ]);
             setInputValue("");
             inputRef.current.textContent = "";
+
+            // Create chat if on first submission and DB is healthy
+            let activeChatId = currentChatId;
+            if (!currentChatId && !hasSubmittedFirst) {
+                try {
+                    const healthRes = await fetch('http://localhost:3000/api/dbhealth');
+                    const healthData = await healthRes.json();
+                    
+                    if (healthData.ok) {
+                        const createRes = await fetch('http://localhost:3000/api/chats', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                chat_name: prompt.slice(0, 50) + (prompt.length > 50 ? '...' : '')
+                            })
+                        });
+                        const createData = await createRes.json();
+                        if (createData.ok) {
+                            activeChatId = createData.chat_id;
+                            newChatIdRef.current = activeChatId;
+                            setCurrentChatId(activeChatId);
+                            setHasSubmittedFirst(true);
+                            // Navigate to the new chat and emit event with new chat data for sidebar
+                            navigate(`/chat/${activeChatId}`);
+                            window.dispatchEvent(new CustomEvent('newChatCreated', {
+                                detail: {
+                                    chat_id: createData.chat_id,
+                                    chat_name: createData.chat_name || prompt.slice(0, 50) + (prompt.length > 50 ? '...' : '')
+                                }
+                            }));
+                        }
+                    } else {
+                        setHasSubmittedFirst(true);
+                    }
+                } catch (err) {
+                    console.error('Error creating chat:', err);
+                    setHasSubmittedFirst(true);
+                }
+            }
             let requestBody = {};
             let responsePath = savedConfig?.responsePath || '';
             let outputType = savedConfig?.outputType || 'json';
@@ -172,6 +343,41 @@ function ChatbotInteraction() {
                 ]);
 
             try {
+                // Determine parent_id for the user message (parent to the previous message in the thread)
+                let lastMessageId = 'root';
+                let userMessageParentId = 'root';
+                
+                // If there are messages, use the last one as parent
+                if (messages.length > 0) {
+                    userMessageParentId = messages[messages.length - 1].message_id || 'root';
+                }
+                
+                // Append user message to chat if chat exists
+                if (activeChatId) {
+                    try {
+                        const userMsgRes = await fetch(`http://localhost:3000/api/chats/${activeChatId}/messages`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                role: 'user',
+                                interaction_type: modelType === 'chat' ? 'chat' : 'completion',
+                                message_content: prompt,
+                                parent_id: userMessageParentId
+                            })
+                        });
+                        const userMsgData = await userMsgRes.json();
+                        if (userMsgData.ok) {
+                            lastMessageId = userMsgData.message_id;
+                            // If this was a new chat (just created), emit update and navigate
+                            if (!currentChatId && hasSubmittedFirst) {
+                                window.dispatchEvent(new Event('chatUpdated'));
+                                navigate(`/chat/${activeChatId}`);
+                            }
+                        }
+                    } catch (err) {
+                        console.error('Error appending user message to chat:', err);
+                    }
+                }
                 const proxyReq = {
                     url: baseUrl.href,
                     method,
@@ -196,9 +402,33 @@ function ChatbotInteraction() {
                 } catch {
                     extracted = undefined;
                 }
+                
+                const assistantContent = typeof extracted === 'undefined' ? '(no response)' : (typeof extracted === 'object' ? JSON.stringify(extracted, null, 2) : String(extracted));
+                
+                // Generate a unique message_id for the assistant message
+                const assistantMessageId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                
+                // Append assistant message to chat if chat exists
+                if (activeChatId) {
+                    try {
+                        await fetch(`http://localhost:3000/api/chats/${activeChatId}/messages`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                role: 'assistant',
+                                interaction_type: modelType === 'chat' ? 'chat' : 'completion',
+                                message_content: assistantContent,
+                                parent_id: lastMessageId
+                            })
+                        });
+                    } catch (err) {
+                        console.error('Error appending assistant message to chat:', err);
+                    }
+                }
+                
                 setMessages(prev => [
                     ...prev.filter(m => m.role !== 'processing'),
-                    { role: 'assistant', content: typeof extracted === 'undefined' ? '(no response)' : (typeof extracted === 'object' ? JSON.stringify(extracted, null, 2) : String(extracted)), type: modelType }
+                    { role: 'assistant', content: assistantContent, type: modelType, message_id: assistantMessageId, parent_id: lastMessageId }
                 ]);
             } catch (err) {
                 setMessages(prev => [
@@ -215,21 +445,37 @@ function ChatbotInteraction() {
             <header>
                 <p>CustomGPT</p>
             </header>
-            <section className="chat-interactions" ref={sectionRef} onScroll={handleOnScroll}>
-                {messages.map((message, index) => (
-                    <article key={index}>
-                        <div className={message.role === 'user' ? 'whitespace-prewrap user-message' : 'whitespace-prewrap assistant-message'}>
-                            {message.role === 'processing' ? (<div className="assistant-processing-shimmer"></div>) : (
-                               message.role === "assistant" ? (
-                                <div className="markdown prose dark:prose-invert w-full break-words light markdown-new-styling">
-                                    <Markdown>{message.content}</Markdown>
+            {chatLoadError ? (
+                <section className="chat-interactions" ref={sectionRef} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
+                    <div style={{ textAlign: 'center', color: '#ef4444', fontSize: '1.1rem' }}>
+                        <p>❌ Chat not found</p>
+                        <p style={{ fontSize: '0.9rem', marginTop: '0.5rem' }}>Redirecting to home...</p>
+                    </div>
+                </section>
+            ) : (
+                <section className="chat-interactions" ref={sectionRef} onScroll={handleOnScroll}>
+                {isLoadingMessages && messages.length === 0 ? (
+                    <div className="messages-shimmer-container">
+                        <div className="rotating-shimmer"></div>
+                    </div>
+                ) : (
+                    <>
+                        {messages.map((message, index) => (
+                            <article key={index}>
+                                <div className={message.role === 'user' ? 'whitespace-prewrap user-message' : 'whitespace-prewrap assistant-message'}>
+                                    {message.role === 'processing' ? (<div className="assistant-processing-shimmer"></div>) : (
+                                       message.role === "assistant" ? (
+                                        <div className="markdown prose dark:prose-invert w-full break-words light markdown-new-styling">
+                                            <Markdown>{message.content}</Markdown>
+                                        </div>
+                                    ) : (message.content)
+                                    )}
                                 </div>
-                            ) : (message.content)
-                            )}
-                        </div>
-                    </article>
-                ))}
-                {messages.length > 0 && messages[messages.length - 1].type === 'completions' && <br/>}
+                            </article>
+                        ))}
+                        {messages.length > 0 && messages[messages.length - 1].type === 'completions' && <br/>}
+                    </>
+                )}
                 <button className="scroll-to-bottom" ref={buttonRef} onClick={(event) => {
                     if (sectionRef.current) {
                         sectionRef.current.scrollTop = maximumScrollValueRef.current;
@@ -238,6 +484,7 @@ function ChatbotInteraction() {
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="white" xmlns="http://www.w3.org/2000/svg" className="icon text-token-text-primary"><path d="M9.33468 3.33333C9.33468 2.96617 9.6326 2.66847 9.99972 2.66829C10.367 2.66829 10.6648 2.96606 10.6648 3.33333V15.0609L15.363 10.3626L15.4675 10.2777C15.7255 10.1074 16.0762 10.1357 16.3034 10.3626C16.5631 10.6223 16.5631 11.0443 16.3034 11.304L10.4704 17.137C10.2108 17.3967 9.7897 17.3966 9.52999 17.137L3.69601 11.304L3.61105 11.1995C3.44054 10.9414 3.46874 10.5899 3.69601 10.3626C3.92328 10.1354 4.27479 10.1072 4.53292 10.2777L4.63741 10.3626L9.33468 15.0599V3.33333Z"></path></svg>
                 </button>
             </section>
+            )}
             <footer>
                 <div className="chat-input">
                     <span contentEditable="true" className="input-area" placeholder="Ask your custom GPT" ref={inputRef}

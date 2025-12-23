@@ -11,6 +11,11 @@ const messageSchema = new mongoose.Schema(
       default: () => uuidv4(),
       required: true,
     },
+    role: {
+      type: String,
+      enum: ['system', 'user', 'assistant'],
+      required: true,
+    },
     interaction_type: {
       type: String,
       enum: ['chat', 'completion'],
@@ -23,12 +28,19 @@ const messageSchema = new mongoose.Schema(
     },
     message_content: {
       type: String,
-      required: true,
+      validate: {
+        validator: function(v) {
+          // Allow empty string for system messages, require non-empty for other roles
+          if (this.role === 'system') return true;
+          return v && v.length > 0;
+        },
+        message: 'message_content is required for non-system messages'
+      },
+      default: '',
     },
     parent_id: {
       type: String,
       default: 'root',
-      required: true,
     },
     status: {
       type: String,

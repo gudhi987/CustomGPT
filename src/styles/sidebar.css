@@ -233,7 +233,7 @@
 .chat-info:has(.chat-options:hover) {
     background-color: transparent
 }
-.bottom-section a:hover, .bottom-section a:focus-visible {
+.bottom-section .chat-info:hover, .bottom-section .chat-info:focus-visible {
     background-color: var(--menu-item-highlighted);
     border-radius: 0.375rem;
     cursor: pointer;

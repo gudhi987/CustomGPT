@@ -43,14 +43,25 @@ router.post('/chats', async (req, res) => {
 
     const { chat_name = 'New Chat', config_name = 'default', interaction_type } = req.body || {};
 
-    // Create new chat document
+    // Create system message as the root message
+    const systemMessage = {
+      message_id: 'root',
+      role: 'system',
+      interaction_type: 'chat',
+      created_at: new Date(),
+      message_content: '',
+      parent_id: '',
+      status: 'success',
+    };
+
+    // Create new chat document with the system message
     const newChat = new Chat({
       chat_id: uuidv4(),
       chat_name,
       config_name,
       created_at: new Date(),
       last_updated_at: new Date(),
-      messages: [],
+      messages: [systemMessage],
     });
 
     const savedChat = await newChat.save();
@@ -161,7 +172,7 @@ router.get('/chats/:id', async (req, res) => {
 /**
  * POST /chats/:id/messages
  * Append a message to a chat
- * Request body: { interaction_type: 'chat' | 'completion', message_content: string, parent_id?: string, status?: 'success' | 'failure' | 'interrupted' }
+ * Request body: { role: 'system' | 'user' | 'assistant', interaction_type: 'chat' | 'completion', message_content: string, parent_id?: string, status?: 'success' | 'failure' | 'interrupted' }
  * Returns: { ok: true, message_id, chat: { ... } }
  */
 router.post('/chats/:id/messages', async (req, res) => {
@@ -176,13 +187,13 @@ router.post('/chats/:id/messages', async (req, res) => {
     }
 
     const { id } = req.params;
-    const { interaction_type, message_content, parent_id = 'root', status = 'success' } = req.body || {};
+    const { role, interaction_type, message_content, parent_id = 'root', status = 'success' } = req.body || {};
 
     // Validate required fields
-    if (!interaction_type || !message_content) {
+    if (!role || !interaction_type || !message_content) {
       return res.status(400).json({
         ok: false,
-        message: 'Missing required fields: interaction_type and message_content',
+        message: 'Missing required fields: role, interaction_type, and message_content',
         error: 'INVALID_INPUT',
       });
     }
@@ -200,6 +211,7 @@ router.post('/chats/:id/messages', async (req, res) => {
     // Create message object
     const newMessage = {
       message_id: uuidv4(),
+      role,
       interaction_type,
       created_at: new Date(),
       message_content,
