@@ -148,6 +148,11 @@ function ChatbotInteraction() {
                 const totalContentHeight = sectionRef.current.scrollHeight;
                 const maximumScrollValue = Math.max(0, totalContentHeight - totalParentContentHeight);
                 maximumScrollValueRef.current = maximumScrollValue;
+                
+                // Hide scroll-to-bottom button if no scroll is needed
+                if (buttonRef.current) {
+                    buttonRef.current.style.display = maximumScrollValue > 100 ? "none" : "none";
+                }
             }
         };
         
@@ -155,6 +160,16 @@ function ChatbotInteraction() {
         window.addEventListener('resize', updateMaximumScrollValue);
         return () => window.removeEventListener('resize', updateMaximumScrollValue);
     }, [messages]);
+
+    // Reset button visibility and scroll position when navigating between chats
+    useEffect(() => {
+        if (buttonRef.current) {
+            buttonRef.current.style.display = "none";
+        }
+        if (sectionRef.current) {
+            sectionRef.current.scrollTop = 0;
+        }
+    }, [currentChatId]);
 
     const handleOpenConfig = () => {
         setConfigModalOpen(true);
@@ -228,10 +243,14 @@ function ChatbotInteraction() {
             // Generate a unique message_id for the user message
             const userMessageId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
             
-            setMessages(prev => [
-                ...prev,
-                { role: 'user', content: prompt, type: modelType, message_id: userMessageId, parent_id: prev.length > 0 ? prev[prev.length - 1].message_id || 'root' : 'root' }
-            ]);
+            // Build the updated messages array with the new user message (to avoid stale closure)
+            const userMessageParentId = messages.length > 0 ? messages[messages.length - 1].message_id || 'root' : 'root';
+            const updatedMessages = [
+                ...messages,
+                { role: 'user', content: prompt, type: modelType, message_id: userMessageId, parent_id: userMessageParentId }
+            ];
+            
+            setMessages(updatedMessages);
             setInputValue("");
             inputRef.current.textContent = "";
 
@@ -294,11 +313,15 @@ function ChatbotInteraction() {
 
             if (modelType === 'chat') {
                 let chatHistory = [];
-                for (let i = messages.length - 1; i >= 0; i--) {
-                    if (messages[i].type === 'completion') break;
-                    chatHistory.unshift(messages[i]);
+                for (let i = updatedMessages.length - 1; i >= 0; i--) {
+                    console.log(`Checking message at index ${i}:`, updatedMessages[i].type);
+                    if (updatedMessages[i].type === 'completion') {
+                        console.log('Hit completion type, breaking');
+                        break;
+                    }
+                    console.log(`Adding message at index ${i} to chatHistory`);
+                    chatHistory.unshift(updatedMessages[i]);
                 }
-                chatHistory.push({ role: 'user', content: prompt, type: 'chat' });
                 requestBody = { messages: chatHistory.map(({ role, content }) => ({ role, content })) };
             } else {
                 requestBody = { prompt };
@@ -321,6 +344,10 @@ function ChatbotInteraction() {
                                 });
                             };
                             replacePromptInObject(bodyTemplate);
+                            // Preserve chat history if using chat model type
+                            if (modelType === 'chat' && requestBody.messages) {
+                                bodyTemplate.messages = requestBody.messages;
+                            }
                             requestBody = bodyTemplate;
                         } else {
                             requestBody = prompt;
