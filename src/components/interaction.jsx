@@ -369,6 +369,13 @@ function ChatbotInteraction() {
                     { role: 'processing', content: '', type: '' }
                 ]);
 
+            // Scroll to bottom when a new message is added
+            setTimeout(() => {
+                if (sectionRef.current) {
+                    sectionRef.current.scrollTop = sectionRef.current.scrollHeight;
+                }
+            }, 100);
+
             try {
                 // Determine parent_id for the user message (parent to the previous message in the thread)
                 let lastMessageId = 'root';
